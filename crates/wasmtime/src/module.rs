@@ -323,6 +323,17 @@ impl Module {
         Self::from_parts(engine, mmap, info, types)
     }
 
+    #[cfg(compiler)]
+    #[cfg_attr(nightlydoc, doc(cfg(feature = "cranelift")))] // see build.rs
+    pub unsafe fn from_trusted_file(engine: &Engine, path: impl AsRef<Path>) -> Result<Module> {
+        let file = MmapVec::from_file(path.as_ref())?;
+        if &file[0..4] == b"\x7fELF" {
+            return Module::deserialize(engine, &*file);
+        }
+
+        Module::new(engine, &*file)
+    }
+
     /// Converts an input binary-encoded WebAssembly module to compilation
     /// artifacts and type information.
     ///
